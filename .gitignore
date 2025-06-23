@@ -1,0 +1,11 @@
+
+#Ignorar las carpetas log, install y build#
+log/
+install/
+build/
+
+#Ignorar archivos temporales de vscode#
+.vscode/
+
+#Ignorar cache de python, en cualquier carpeta#
+__pycache__/
