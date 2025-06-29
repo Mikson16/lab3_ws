@@ -49,7 +49,7 @@ def compute_likelihood_field(occ_data, width, height, sigma):
 
 
 
-class MapPGMPublisher(Node):
+class LikelihoodFieldCreator(Node):
     def __init__(self):
         super().__init__('map_pgm_publisher')
 
@@ -87,10 +87,10 @@ class MapPGMPublisher(Node):
             else:
                 occ_data.append(-1)
         
-        sigma = 10
+        sigma =5.5 # 2 define poco
         occ_data = compute_likelihood_field(occ_data, width, height, sigma)
         matriz = np.array(occ_data, dtype=np.int8).reshape((height, width))
-        print(matriz)
+        # print(matriz)
 
         
         self.occ_grid = OccupancyGrid()
@@ -117,7 +117,7 @@ class MapPGMPublisher(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = MapPGMPublisher()
+    node = LikelihoodFieldCreator()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
