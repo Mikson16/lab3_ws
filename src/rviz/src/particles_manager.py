@@ -95,75 +95,11 @@ class ParticlesManager(Node):
   def measurement_model(self, particle, scan, map_data, origin_x, origin_y, resolution, width, height):
     """
     Evalúa la probabilidad de la partícula dada la observación (scan + mapa)
-    Retorna un peso ∈ [0, 1]
+    Retorna un peso ∈ [0, 1], Es el likelihood que implementa Robot.py pero modificado
     """
-    x = particle.x
-    y = particle.y
-    #sin angulo de momento
-    #ang = particle.ang
 
-    likelihood = 1.0
-    z_hit = 0.8  # factor de peso para aciertos
-    sigma_hit = 0.2  # desviación estándar del modelo Gaussiano
-
-    for rayo in range(len(scan.ranges)):
-        if 62 < rayo < 118:
-            dist = scan.ranges[rayo]
-            if math.isinf(dist) or math.isnan(dist):
-                continue
-
-            theta = scan.angle_min + rayo * scan.angle_increment
-            x_beam = x + dist * math.cos(theta)
-            y_beam = y + dist * math.sin(theta)
-
-            x_idx = int((x_beam - origin_x) / resolution)
-            y_idx = int((y_beam - origin_y) / resolution)
-
-            if 0 <= x_idx < width and 0 <= y_idx < height:
-                index = y_idx * width + x_idx
-                occ = map_data[index]
-                if occ > 50:  # si es una celda ocupada
-                    prob = z_hit * math.exp(- (dist ** 2) / (2 * sigma_hit ** 2))
-                else:
-                    prob = 0.01
-            else:
-                prob = 0.01
-
-            likelihood *= prob  # producto de probabilidades
-
-    return likelihood
-  
   def mcl_update(self, control, observation):
-    scan = observation['scan']
-    map_data = observation['map'].data
-    info = observation['map'].info
-
-    temp_particles = []
-
-    for p in self.particles:
-        new_p = Particle(p.x, p.y, p.ang, sigma=self.sigma)
-        new_p.move(*control)
-
-        new_p.weight = self.measurement_model(
-            new_p, scan, map_data,
-            info.origin.position.x,
-            info.origin.position.y,
-            info.resolution,
-            info.width,
-            info.height
-        )
-        temp_particles.append(new_p)
-
-    # Normalizar
-    total_weight = sum(p.weight for p in temp_particles)
-    if total_weight == 0:
-        total_weight = 1e-6
-    for p in temp_particles:
-        p.weight /= total_weight
-
-    self.particles = choices(temp_particles, [p.weight for p in temp_particles], k=self.num_particles)
-
-    self.publish_particles()
+    pass
 
 
 
