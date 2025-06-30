@@ -11,6 +11,14 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
+ament_python_install_package(${PROJECT_NAME})
+
+install(PROGRAMS nodes/laser_scan_subs.py nodes/particle_filter.py nodes/read_map.py nodes/likelihood_fields_creator.py nodes/plausibility_field.py nodes/Robot.py nodes/sensor_model.py
+  DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

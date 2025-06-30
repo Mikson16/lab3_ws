@@ -7,6 +7,7 @@ from geometry_msgs.msg import Pose
 import cv2
 import numpy as np
 from rclpy.qos import QoSProfile, DurabilityPolicy
+import os
 
 
 def compute_likelihood_field(occ_data, width, height, sigma):
@@ -66,9 +67,11 @@ class LikelihoodFieldCreator(Node):
         
     
         # lee la imagen
-        img = cv2.imread("mapa.pgm", cv2.IMREAD_GRAYSCALE)
-        if img is None:
-            self.get_logger().error("No se pudo abrir el archivo mapa.pgm")
+        try:
+            mapa_path = os.path.join(os.path.dirname(__file__), 'mapa.pgm')
+            img = cv2.imread(mapa_path, cv2.IMREAD_GRAYSCALE)
+        except cv2.error as e:
+            self.get_logger().error(f"[LIKELIHOOD] Error al leer el archivo mapa.pgm: {e}")
             rclpy.shutdown()
             return
         # Invertimos verticalmente la imagen para que calce con nuestro sistema de 

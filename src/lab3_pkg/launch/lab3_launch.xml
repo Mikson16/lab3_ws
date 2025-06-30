@@ -1,0 +1,9 @@
+<launch>
+<include file="$(find-pkg-share very_simple_robot_simulator)/launch/run_all.xml"/>
+<node pkg="lab3_pkg" exec="likelihood_fields_creator.py" name="LikelihoodFieldCreator" output="screen">
+</node>
+<node pkg="lab3_pkg" exec="read_map.py" name="MapDisplay" output="screen">
+</node>
+<node pkg="lab3_pkg" exec="Robot.py" name="RobotNode" output="screen">
+</node>
+</launch>
