@@ -8,6 +8,7 @@ class Particle( object ):
     self.x, self.y, self.ang = x, y, ang
     self.last_x, self.last_y, self.last_ang = x, y, ang
     self.sigma = sigma
+    self.weight = 1.0  # Para el MCL lab3
 
   def move( self, delta_x, delta_y, delta_ang ):
     self.x += delta_x +  gauss (0, self.sigma )

@@ -7,9 +7,14 @@ from geometry_msgs.msg import Pose, PoseArray
 from tf_transformations import quaternion_from_euler
 from particles import Particle
 #from src.rviz.src.particles import Particle
-
+#mport para MCL lab3
+from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import OccupancyGrid
+import threading as th
+import time
+import math
 import numpy as np
-from random import uniform
+from random import uniform, choices
 
 class ParticlesManager(Node):
   
@@ -21,7 +26,34 @@ class ParticlesManager(Node):
     self.pub_particles = self.create_publisher(PoseArray, 'particles', 10)
     # For testing only:
     self.create_timer( 1.0, self.rotate_particles )
+    #PAra lab3 MCL
+    self.latest_scan = None
+    self.latest_map = None
+    self.latest_control = None
+    self.create_subscription(LaserScan, '/scan', self.scan_callback, 10)
+    self.create_subscription(OccupancyGrid, '/map', self.map_callback, 10)
+    self.create_subscription(Pose, '/real_pose', self.control_callback, 10)
+    th.Thread(target=self.run_localzation, daemon=True).start()
+  
+  def run_localzation( self):
+     while rclpy.ok():
+        if self.latest_scan is not None and self.latest_map is not None and self.latest_control is not None:
+          observation = {
+            'scan': self.latest_scan,
+            'map': self.latest_map
+          }
+          control = self.latest_control
+          self.mcl_update(control, observation)
+          time.sleep(0.1)  # Ajusta el tiempo de espera según sea necesario
+  def scan_callback(self, msg):
+    self.latest_scan = msg
 
+  def map_callback(self, msg):
+    self.latest_map = msg
+
+  def control_callback(self, msg):
+    self.latest_control = [msg.linear.x, msg.linear.y, msg.angular.z]
+    
   def create_particles( self, range_x, range_y ):
     for i in range( 0, self.num_particles ):
       x = uniform( range_x[0], range_x[1] )
@@ -58,6 +90,81 @@ class ParticlesManager(Node):
   # For testing only:
   def rotate_particles( self ):
     self.update_particles( 0, 0, (30*np.pi/180) )
+  
+  # Para el lab3 MCL
+  def measurement_model(self, particle, scan, map_data, origin_x, origin_y, resolution, width, height):
+    """
+    Evalúa la probabilidad de la partícula dada la observación (scan + mapa)
+    Retorna un peso ∈ [0, 1]
+    """
+    x = particle.x
+    y = particle.y
+    #sin angulo de momento
+    #ang = particle.ang
+
+    likelihood = 1.0
+    z_hit = 0.8  # factor de peso para aciertos
+    sigma_hit = 0.2  # desviación estándar del modelo Gaussiano
+
+    for rayo in range(len(scan.ranges)):
+        if 62 < rayo < 118:
+            dist = scan.ranges[rayo]
+            if math.isinf(dist) or math.isnan(dist):
+                continue
+
+            theta = scan.angle_min + rayo * scan.angle_increment
+            x_beam = x + dist * math.cos(theta)
+            y_beam = y + dist * math.sin(theta)
+
+            x_idx = int((x_beam - origin_x) / resolution)
+            y_idx = int((y_beam - origin_y) / resolution)
+
+            if 0 <= x_idx < width and 0 <= y_idx < height:
+                index = y_idx * width + x_idx
+                occ = map_data[index]
+                if occ > 50:  # si es una celda ocupada
+                    prob = z_hit * math.exp(- (dist ** 2) / (2 * sigma_hit ** 2))
+                else:
+                    prob = 0.01
+            else:
+                prob = 0.01
+
+            likelihood *= prob  # producto de probabilidades
+
+    return likelihood
+  
+  def mcl_update(self, control, observation):
+    scan = observation['scan']
+    map_data = observation['map'].data
+    info = observation['map'].info
+
+    temp_particles = []
+
+    for p in self.particles:
+        new_p = Particle(p.x, p.y, p.ang, sigma=self.sigma)
+        new_p.move(*control)
+
+        new_p.weight = self.measurement_model(
+            new_p, scan, map_data,
+            info.origin.position.x,
+            info.origin.position.y,
+            info.resolution,
+            info.width,
+            info.height
+        )
+        temp_particles.append(new_p)
+
+    # Normalizar
+    total_weight = sum(p.weight for p in temp_particles)
+    if total_weight == 0:
+        total_weight = 1e-6
+    for p in temp_particles:
+        p.weight /= total_weight
+
+    self.particles = choices(temp_particles, [p.weight for p in temp_particles], k=self.num_particles)
+
+    self.publish_particles()
+
 
 
 def main():
