@@ -5,7 +5,8 @@ from rclpy.node import Node
 from std_msgs.msg import Header
 from geometry_msgs.msg import Pose, PoseArray
 from tf_transformations import quaternion_from_euler
-from src.rviz.src.particles import Particle
+from particles import Particle
+#from src.rviz.src.particles import Particle
 
 import numpy as np
 from random import uniform

@@ -14,7 +14,7 @@
 
     <!-- Environment Simulation -->
     <node pkg="very_simple_robot_simulator" exec="world_state_gui.py" name="world_state_gui" output="screen">
-        <param name="map_file" value="$(find-pkg-share ayudantia_rviz)/map/mapa.yaml" />
+        <param name="map_file" value="$(find-pkg-share rviz)/map/mapa.yaml" />
     </node>
 
     <!-- Transforms between reference frames -->
@@ -33,9 +33,10 @@
     </node> -->
 
     <!-- Rviz -->
-    <!-- <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d /home/slawhs/robotica_movil_ws/src/ayudantia_rviz/rviz/rviz_config_ayudantia.rviz"/> -->
+    <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen"/>
+    <!-- <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d /home/slawhs/robotica_movil_ws/src/rviz/rviz/rviz_config_ayudantia.rviz"/> -->
 
     <!-- Particles generator -->
-    <!-- <node pkg="ayudantia_rviz" exec="particles_manager.py" name="particles_manager" /> -->
+    <node pkg="rviz" exec="particles_manager.py" name="particles_manager" />
 
 </launch>
